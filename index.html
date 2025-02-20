@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Comércio Exterior</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        h1, h2 {
+            color: #004d99;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            margin-bottom: 15px;
+        }
+
+        input, button {
+            padding: 12px;
+            margin-top: 10px;
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #004d99;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #003366;
+        }
+
+        p {
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        #docList {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #docList li {
+            background-color: #e6f0ff;
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        #docList li a {
+            color: #004d99;
+            text-decoration: none;
+        }
+
+        #docList li a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                width: 100%;
+                padding: 10px;
+            }
+
+            input, button {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Portal de Comércio Exterior</h1>
+
+        <!-- Calculadora de Câmbio -->
+        <div class="card">
+            <h2>Calculadora de Câmbio</h2>
+            <input type="number" id="usdValue" placeholder="Digite o valor em USD">
+            <button onclick="convertCurrency()">Converter para BRL</button>
+            <p id="convertedValue">Valor em BRL: R$ 0.00</p>
+        </div>
+
+        <!-- Simulador de Custos -->
+        <div class="card">
+            <h2>Simulador de Custos de Importação</h2>
+            <input type="number" id="productValue" placeholder="Valor do Produto em BRL">
+            <button onclick="calculateImportCosts()">Calcular Custos</button>
+            <p id="importCostResult"></p>
+        </div>
+
+        <!-- Biblioteca de Documentos -->
+        <div class="card">
+            <h2>Biblioteca de Documentos</h2>
+            <input type="text" id="searchDoc" placeholder="Pesquisar documentos..." onkeyup="filterDocuments()">
+            <ul id="docList"></ul>
+        </div>
+    </div>
+
+    <script>
+        let exchangeRate = 5.0; // Valor padrão temporário
+
+        // Obter a taxa de câmbio da API
+        fetch("https://api.exchangerate-api.com/v4/latest/USD")
+            .then(response => response.json())
+            .then(data => {
+                exchangeRate = data.rates.BRL;
+            })
+            .catch(() => console.log("Falha ao obter taxa de câmbio"));
+
+        // Conversão de câmbio
+        function convertCurrency() {
+            const usd = document.getElementById("usdValue").value;
+            const brl = (usd * exchangeRate).toFixed(2);
+            document.getElementById("convertedValue").textContent = `Valor em BRL: R$ ${brl}`;
+        }
+
+        // Simulador de custos de importação
+        function calculateImportCosts() {
+            const productValue = parseFloat(document.getElementById("productValue").value);
+            const tax = productValue * 0.3; // 30% de imposto
+            const freight = productValue * 0.15; // 15% de frete
+            const total = (productValue + tax + freight).toFixed(2);
+            document.getElementById("importCostResult").textContent = `Custo total: R$ ${total} (Impostos: R$ ${tax.toFixed(2)}, Frete: R$ ${freight.toFixed(2)})`;
+        }
+
+        // Carregar documentos da biblioteca (via JSON)
+        fetch("documents.json")
+            .then(response => response.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    window.documentsData = data;
+                    displayDocuments(data);
+                } else {
+                    console.error('O arquivo documents.json não contém um array válido.');
+                }
+            })
+            .catch(() => console.log("Falha ao obter documentos"));
+
+        function displayDocuments(docs) {
+            const docList = document.getElementById("docList");
+            docList.innerHTML = "";
+            docs.forEach(doc => {
+                let li = document.createElement("li");
+                li.innerHTML = `<a href="${doc.link}" target="_blank">${doc.title}</a>`;
+                docList.appendChild(li);
+            });
+        }
+
+        function filterDocuments() {
+            // Verificar se 'documentsData' foi carregado corretamente
+            if (!Array.isArray(window.documentsData)) {
+                console.error('Os documentos não foram carregados corretamente.');
+                return;
+            }
+            const search = document.getElementById("searchDoc").value.toLowerCase();
+            const filtered = window.documentsData.filter(doc => doc.title.toLowerCase().includes(search));
+            displayDocuments(filtered);
+        }
+    </script>
+
+</body>
+</html>
