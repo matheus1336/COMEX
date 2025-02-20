@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Busca de Filmes</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.3/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        #movie-info {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            display: none;
+        }
+        img {
+            max-width: 200px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Busca de Filmes</h1>
+    <input type="text" id="movie-title" placeholder="Digite o nome do filme">
+    <button onclick="searchMovie()">Buscar</button>
+    <button onclick="exportToExcel()" style="display:none;" id="export-btn">Exportar para Excel</button>
+    <div id="movie-info"></div>
+    
+    <script>
+        const apiKey = "93deefe2";
+        let movieData = {};
+        
+        function searchMovie() {
+            const title = document.getElementById("movie-title").value;
+            if (!title) {
+                alert("Por favor, digite um nome de filme.");
+                return;
+            }
+            
+            const url = `http://www.omdbapi.com/?t=${encodeURIComponent(title)}&apikey=${apiKey}`;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.Response === "True") {
+                        movieData = {
+                            "Título": data.Title,
+                            "Ano": data.Year,
+                            "Diretor": data.Director,
+                            "Atores": data.Actors,
+                            "Gênero": data.Genre,
+                            "Sinopse": data.Plot
+                        };
+                        
+                        document.getElementById("movie-info").innerHTML = `
+                            <h2>${data.Title} (${data.Year})</h2>
+                            <p><strong>Diretor:</strong> ${data.Director}</p>
+                            <p><strong>Atores:</strong> ${data.Actors}</p>
+                            <p><strong>Gênero:</strong> ${data.Genre}</p>
+                            <p><strong>Sinopse:</strong> ${data.Plot}</p>
+                            <img src="${data.Poster}" alt="Poster do Filme">
+                        `;
+                        document.getElementById("movie-info").style.display = "block";
+                        document.getElementById("export-btn").style.display = "inline-block";
+                    } else {
+                        alert("Filme não encontrado!");
+                    }
+                })
+                .catch(error => console.error("Erro ao buscar dados:", error));
+        }
+        
+        function exportToExcel() {
+            const ws = XLSX.utils.json_to_sheet([movieData]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Filme");
+            XLSX.writeFile(wb, "filme.xlsx");
+        }
+    </script>
+</body>
+</html>
